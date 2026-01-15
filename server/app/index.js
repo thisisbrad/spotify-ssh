@@ -2,17 +2,14 @@ const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 const session = require("express-session");
-// const connectDB = require("../app/db/config");
+const connectDB = require("../app/db/config");
 const mongoose = require("mongoose");
 const MongoStore = require("connect-mongo").default;
-// connectDB();
+
+// connect to MongoDB
+connectDB();
 
 const app = express();
-// Connect to MongoDB FIRST
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected!"))
-  .catch((err) => console.error("MongoDB connection error:", err));
 
 const routeHandler = require("./routes");
 

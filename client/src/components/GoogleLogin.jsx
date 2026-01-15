@@ -26,7 +26,7 @@ const GoogleLogin = () => {
   };
 
   const handleLogin = () => {
-    window.location.href = `${API_URL}/auth/google`;
+    window.location.href = `${API_URL}/auth/login`;
   };
 
   const handleLogout = async () => {
