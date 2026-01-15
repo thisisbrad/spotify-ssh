@@ -1,11 +1,19 @@
 const mongoose = require("mongoose");
 
-const authorSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
+    googleId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     name: String,
-    email: String,
-    googleId: String,
-    picutre: String,
+    picture: String,
     access_token: String,
   },
   { timestamps: true }
