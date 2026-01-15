@@ -6,6 +6,7 @@ const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 const login = async (req, res) => {
+  console.log(">>>", req.session);
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT,
     redirect_uri: process.env.GOOGLE_CALLBACK_URI,
@@ -29,6 +30,8 @@ const callback = async (req, res) => {
       .status(404)
       .json({ message: "The callback has no code", success: false });
   }
+
+  console.log(">>>", req.session);
 
   try {
     const tokenResponse = await axios.post(GOOGLE_TOKEN_URL, {
@@ -64,7 +67,7 @@ const callback = async (req, res) => {
     // TODO: connect frontend
     res.redirect(process.env.CLIENT_URL);
 
-    res.status(200).json({ user, success: true });
+    // res.status(200).json({ user, success: true });
   } catch (error) {
     console.error("OAuth error:", error.response?.data || error.message);
     // TODO: connect frontend
@@ -82,7 +85,9 @@ const getCurrentUser = async (req, res) => {
   }
 
   try {
-    const user = await User.findById(req.session.userId).select("-__v");
+    const user = await User.findById(req.session.userId).select(
+      "email name picture -_id"
+    );
     if (!user) {
       return res.status(401).json({ user: null });
     }
@@ -92,8 +97,39 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+// Get sessions for current user
+const getAttachedSessions = async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  // res.json({ status: "rocks" });
+
+  try {
+    // const sessions = await mongoose.connection.db.collection("sessions").find();
+    // console.log(">>>", sessions);
+    // res.json({ status: "rocks" });
+    //   .toArray();
+    // const formattedSessions = sessions.map((session) => ({
+    //   sessionId: session._id,
+    //   isCurrentSession: session._id === req.sessionID,
+    //   expires: session.expires,
+    //   createdAt: session.session?.cookie?.expires,
+    // }));
+    // res.json({ sessions: formattedSessions });
+  } catch (error) {
+    // res.status(500).json({ error: error.message });
+  }
+};
+
 const logout = async (req, res) => {
   res.status(200).json({ success: true });
 };
 
-module.exports = { login, logout, callback, getCurrentUser };
+module.exports = {
+  login,
+  logout,
+  callback,
+  getCurrentUser,
+  getAttachedSessions,
+};
