@@ -57,12 +57,38 @@ const callback = async (req, res) => {
       expires_in,
       refresh_token,
     });
+
+    // Save user ID in session
+    req.session.userId = user._id;
+
+    // TODO: connect frontend
+    // res.redirect(process.env.CLIENT_URL);
+
     res.status(200).json({ user, success: true });
   } catch (error) {
-    console.log(error);
+    console.error("OAuth error:", error.response?.data || error.message);
+    // TODO: connect frontend
+    // res.redirect(`${process.env.CLIENT_URL}?error=auth_failed`);
     res
       .status(404)
       .json({ message: "The callback has an error", success: false });
+  }
+};
+
+// Get current user
+const getCurrentUser = async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ user: null });
+  }
+
+  try {
+    const user = await User.findById(req.session.userId).select("-__v");
+    if (!user) {
+      return res.status(401).json({ user: null });
+    }
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
@@ -70,4 +96,4 @@ const logout = async (req, res) => {
   res.status(200).json({ success: true });
 };
 
-module.exports = { login, logout, callback };
+module.exports = { login, logout, callback, getCurrentUser };
