@@ -16,6 +16,8 @@ const GoogleLogin = () => {
   const checkAuth = async () => {
     try {
       const response = await axios.get(`${API_URL}/auth/current-user`);
+      console.log(">>", response.data.user);
+
       setUser(response.data.user);
     } catch (error) {
       console.log("Not authenticated");

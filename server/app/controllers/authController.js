@@ -62,16 +62,16 @@ const callback = async (req, res) => {
     req.session.userId = user._id;
 
     // TODO: connect frontend
-    // res.redirect(process.env.CLIENT_URL);
+    res.redirect(process.env.CLIENT_URL);
 
     res.status(200).json({ user, success: true });
   } catch (error) {
     console.error("OAuth error:", error.response?.data || error.message);
     // TODO: connect frontend
-    // res.redirect(`${process.env.CLIENT_URL}?error=auth_failed`);
-    res
-      .status(404)
-      .json({ message: "The callback has an error", success: false });
+    res.redirect(`${process.env.CLIENT_URL}?error=auth_failed`);
+    // res
+    //   .status(404)
+    //   .json({ message: "The callback has an error", success: false });
   }
 };
 

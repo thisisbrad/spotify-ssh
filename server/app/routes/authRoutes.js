@@ -1,9 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const { login, logout, callback } = require("../controllers/authController");
+const {
+  login,
+  logout,
+  callback,
+  getCurrentUser,
+} = require("../controllers/authController");
 // localhost:3000/api/v1/auth
 router.get("/login", login);
 router.get("/callback", callback);
-router.get("/logout", logout);
+router.get("/current-user", getCurrentUser);
+router.post("/logout", logout);
 
 module.exports = router;
