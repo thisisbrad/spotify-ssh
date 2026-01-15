@@ -15,13 +15,15 @@ const login = async (req, res) => {
     prompt: "consent",
   });
   const authURL = `${GOOGLE_AUTH_URL}?${params.toString()}`;
-  // console.log();
   res.redirect(authURL);
-  // res.status(200).json({ authURL, success: true });
 };
 
 const callback = async (req, res) => {
-  const { code } = req.query;
+  const { code, error } = req.query;
+  // Once I have React
+  // if (error || !code) {
+  //   return res.redirect(`${process.env.CLIENT_URL}?error=${error || 'no_code'}`);
+  // }
   if (!code) {
     res
       .status(404)
@@ -37,13 +39,13 @@ const callback = async (req, res) => {
       grant_type: "authorization_code",
     });
 
-    const { access_token } = tokenResponse.data;
-    console.log("access token:", tokenResponse.data);
+    const { access_token, expires_in, refresh_token } = tokenResponse.data;
+    // console.log("access token:", tokenResponse.data);
 
     const userInfoResponse = await axios.get(GOOGLE_USERINFO_URL, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
-    console.log("User data", userInfoResponse.data);
+    // console.log("User data", userInfoResponse.data);
     const { id, email, name, picture } = userInfoResponse.data;
 
     const user = await User.create({
@@ -52,6 +54,8 @@ const callback = async (req, res) => {
       name,
       picture,
       access_token,
+      expires_in,
+      refresh_token,
     });
     res.status(200).json({ user, success: true });
   } catch (error) {
