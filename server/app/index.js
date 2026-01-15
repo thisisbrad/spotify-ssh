@@ -4,7 +4,7 @@ const cors = require("cors");
 const session = require("express-session");
 // const connectDB = require("../app/db/config");
 const mongoose = require("mongoose");
-const MongoStore = require("connect-mongo");
+const MongoStore = require("connect-mongo").default;
 // connectDB();
 
 const app = express();
@@ -34,9 +34,9 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    // store: MongoStore.create({
-    //   mongoUrl: process.env.MONGO_URI,
-    // }),
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+    }),
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       httpOnly: true,
