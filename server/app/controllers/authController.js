@@ -76,19 +76,19 @@ const callback = async (req, res) => {
 
     // Save user ID in session
     req.session.userId = user._id;
-    console.log("Setting session userId to:", user._id);
-    console.log("Session ID:", req.sessionID);
-    console.log("Full session object:", req.session);
+    // console.log("Setting session userId to:", user._id);
+    // console.log("Session ID:", req.sessionID);
+    // console.log("Full session object:", req.session);
 
     // Force session save
-    req.session.save((err) => {
-      if (err) {
-        console.error("Session save error:", err);
-      } else {
-        console.log("Session saved successfully");
-      }
-      res.redirect(process.env.CLIENT_URL);
-    });
+    // req.session.save((err) => {
+    //   if (err) {
+    //     console.error("Session save error:", err);
+    //   } else {
+    //     console.log("Session saved successfully");
+    //   }
+    res.redirect(process.env.CLIENT_URL);
+    // });
 
     // res.status(200).json({ user, success: true });
   } catch (error) {
@@ -103,9 +103,7 @@ const callback = async (req, res) => {
 // Get current user
 const getCurrentUser = async (req, res) => {
   console.log("=== GET CURRENT USER ===");
-  console.log("Session ID:", req.sessionID);
-  console.log("Session data:", req.session);
-  console.log("User ID in session:", req.session.userId);
+  // console.log("Session data:", req.session);
 
   if (!req.session.userId) {
     console.log("No user ID in session - returning 401");
@@ -113,7 +111,7 @@ const getCurrentUser = async (req, res) => {
   }
   try {
     const user = await User.findById(req.session.userId).select(
-      "email name picture -_id"
+      "email name picture -_id",
     );
     if (!user) {
       return res.status(401).json({ user: null });

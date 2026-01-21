@@ -20,6 +20,8 @@ const GoogleLogin = () => {
     } catch (error) {
       console.log("Not authenicated");
       setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,9 +38,9 @@ const GoogleLogin = () => {
     checkAuth();
   }, []);
 
-  // if (loading) {
-  //   return <div>Loading...</div>;
-  // }
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div style={{ padding: "20px", textAlign: "center" }}>

@@ -11,12 +11,5 @@ router.get("/login", login);
 router.get("/callback", callback);
 router.get("/current-user", getCurrentUser);
 router.post("/logout", logout);
-router.get("/session-test", (req, res) => {
-  res.json({
-    sessionId: req.sessionID,
-    sessionData: req.session,
-    hasUserId: !!req.session.userId,
-  });
-});
 
 module.exports = router;
