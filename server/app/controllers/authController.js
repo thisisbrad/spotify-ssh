@@ -31,8 +31,6 @@ const callback = async (req, res) => {
       .json({ message: "The callback has no code", success: false });
   }
 
-  console.log(">>>", req.session);
-
   try {
     const tokenResponse = await axios.post(GOOGLE_TOKEN_URL, {
       code,
@@ -43,7 +41,6 @@ const callback = async (req, res) => {
     });
 
     const { access_token, expires_in, refresh_token } = tokenResponse.data;
-    // console.log("access token:", tokenResponse.data);
 
     const userInfoResponse = await axios.get(GOOGLE_USERINFO_URL, {
       headers: { Authorization: `Bearer ${access_token}` },
@@ -77,7 +74,13 @@ const callback = async (req, res) => {
 
 // Get current user
 const getCurrentUser = async (req, res) => {
+  console.log("=== GET CURRENT USER ===");
+  console.log("Session ID:", req.sessionID);
+  console.log("Session data:", req.session);
+  console.log("User ID in session:", req.session.userId);
+
   if (!req.session.userId) {
+    console.log("No user ID in session - returning 401");
     return res.status(401).json({ user: null });
   }
   try {
