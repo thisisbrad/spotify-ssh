@@ -20,7 +20,9 @@ const login = async (req, res) => {
 };
 
 const callback = async (req, res) => {
+  console.log("=== OAUTH CALLBACK STARTED ===");
   const { code, error } = req.query;
+  console.log("Query params:", { code, error });
   // Once I have React
   // if (error || !code) {
   //   return res.redirect(`${process.env.CLIENT_URL}?error=${error || 'no_code'}`);
@@ -48,19 +50,45 @@ const callback = async (req, res) => {
     // console.log("User data", userInfoResponse.data);
     const { id, email, name, picture } = userInfoResponse.data;
 
-    const user = await User.create({
-      googleId: id,
-      email,
-      name,
-      picture,
-      access_token,
-      expires_in,
-      refresh_token,
-    });
+    let user = await User.findOne({ googleId: id });
+
+    if (user) {
+      // Update existing user
+      user.email = email;
+      user.name = name;
+      user.picture = picture;
+      user.access_token = access_token;
+      user.expires_in = expires_in;
+      user.refresh_token = refresh_token;
+      await user.save();
+    } else {
+      // Create new user
+      user = await User.create({
+        googleId: id,
+        email,
+        name,
+        picture,
+        access_token,
+        expires_in,
+        refresh_token,
+      });
+    }
 
     // Save user ID in session
     req.session.userId = user._id;
-    res.redirect(process.env.CLIENT_URL);
+    console.log("Setting session userId to:", user._id);
+    console.log("Session ID:", req.sessionID);
+    console.log("Full session object:", req.session);
+
+    // Force session save
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+      } else {
+        console.log("Session saved successfully");
+      }
+      res.redirect(process.env.CLIENT_URL);
+    });
 
     // res.status(200).json({ user, success: true });
   } catch (error) {
@@ -85,7 +113,7 @@ const getCurrentUser = async (req, res) => {
   }
   try {
     const user = await User.findById(req.session.userId).select(
-      "email name picture -_id",
+      "email name picture -_id"
     );
     if (!user) {
       return res.status(401).json({ user: null });
