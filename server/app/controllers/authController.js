@@ -63,14 +63,11 @@ const callback = async (req, res) => {
 
     // Save user ID in session
     req.session.userId = user._id;
-
-    // TODO: connect frontend
     res.redirect(process.env.CLIENT_URL);
 
     // res.status(200).json({ user, success: true });
   } catch (error) {
     console.error("OAuth error:", error.response?.data || error.message);
-    // TODO: connect frontend
     res.redirect(`${process.env.CLIENT_URL}?error=auth_failed`);
     // res
     //   .status(404)
@@ -83,10 +80,9 @@ const getCurrentUser = async (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ user: null });
   }
-
   try {
     const user = await User.findById(req.session.userId).select(
-      "email name picture -_id"
+      "email name picture -_id",
     );
     if (!user) {
       return res.status(401).json({ user: null });
@@ -97,33 +93,11 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-// Get sessions for current user
-const getAttachedSessions = async (req, res) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
-  // res.json({ status: "rocks" });
-
-  try {
-    // const sessions = await mongoose.connection.db.collection("sessions").find();
-    // console.log(">>>", sessions);
-    // res.json({ status: "rocks" });
-    //   .toArray();
-    // const formattedSessions = sessions.map((session) => ({
-    //   sessionId: session._id,
-    //   isCurrentSession: session._id === req.sessionID,
-    //   expires: session.expires,
-    //   createdAt: session.session?.cookie?.expires,
-    // }));
-    // res.json({ sessions: formattedSessions });
-  } catch (error) {
-    // res.status(500).json({ error: error.message });
-  }
-};
-
 const logout = async (req, res) => {
-  res.status(200).json({ success: true });
+  console.log("LOGOUT");
+  req.session.destroy(() => {
+    res.status(200).json({ success: true, message: "Logged out of system." });
+  });
 };
 
 module.exports = {
@@ -131,5 +105,4 @@ module.exports = {
   logout,
   callback,
   getCurrentUser,
-  getAttachedSessions,
 };

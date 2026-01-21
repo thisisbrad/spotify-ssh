@@ -8,19 +8,27 @@ axios.defaults.withCredentials = true;
 const GoogleLogin = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const handleLogin = () => {
-    window.location.href = `${API_URL}/auth/login`;
-  };
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
   const checkAuth = async () => {
     try {
       const response = await axios.get(`${API_URL}/auth/current-user`);
-      console.log(response.data.user);
+      console.log(">>", response.data.user);
+
       setUser(response.data.user);
     } catch (error) {
-      console.log("Not authenicated");
+      console.log("Not authenticated");
       setUser(null);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleLogin = () => {
+    window.location.href = `${API_URL}/auth/login`;
   };
 
   const handleLogout = async () => {
@@ -28,23 +36,25 @@ const GoogleLogin = () => {
       await axios.post(`${API_URL}/auth/logout`);
       setUser(null);
     } catch (error) {
-      console.log("Failed to logout user.");
+      console.error("Logout failed:", error);
     }
   };
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  // if (loading) {
-  //   return <div>Loading...</div>;
-  // }
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div style={{ padding: "20px", textAlign: "center" }}>
       {user ? (
         <div>
-          <p>{user.name}</p>
+          <h2>Welcome, {user.name}!</h2>
+          <img
+            src={user.picture}
+            alt="Profile"
+            style={{ borderRadius: "50%", width: "100px", height: "100px" }}
+          />
+          <p>{user.email}</p>
           <button onClick={handleLogout}>Logout</button>
         </div>
       ) : (
