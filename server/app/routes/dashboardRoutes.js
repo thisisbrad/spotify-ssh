@@ -1,12 +1,8 @@
 const express = require("express");
 const router = express.Router();
-// const {
-//   checkSessionStatus,
-//   refreshSession,
-// } = require("../controllers/sessionController");
 const { requireAuth, requireAuthWithRefresh } = require("../middleware/auth");
-// localhost:3000/api/v1/dashboard
 
+// localhost:3000/api/v1/dashboard
 router.get("/", requireAuth, (req, res) => {
   res.json({
     message: "This is a protected route",
