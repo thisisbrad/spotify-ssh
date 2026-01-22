@@ -1,5 +1,6 @@
 const axios = require("axios");
 const User = require("../models/User");
+const { logSession } = require("../utils/logger");
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -28,6 +29,7 @@ const callback = async (req, res) => {
   //   return res.redirect(`${process.env.CLIENT_URL}?error=${error || 'no_code'}`);
   // }
   if (!code) {
+    await logSession("failed_login", req, { reason: error || "no_code" });
     res
       .status(404)
       .json({ message: "The callback has no code", success: false });
@@ -43,6 +45,8 @@ const callback = async (req, res) => {
     });
 
     const { access_token, expires_in, refresh_token } = tokenResponse.data;
+    // TODO: move to model
+    const tokenExpiry = new Date(Date.now() + expires_in * 1000);
 
     const userInfoResponse = await axios.get(GOOGLE_USERINFO_URL, {
       headers: { Authorization: `Bearer ${access_token}` },
@@ -51,6 +55,7 @@ const callback = async (req, res) => {
     const { id, email, name, picture } = userInfoResponse.data;
 
     let user = await User.findOne({ googleId: id });
+    const isNewUser = !user;
 
     if (user) {
       // Update existing user
@@ -59,6 +64,7 @@ const callback = async (req, res) => {
       user.picture = picture;
       user.access_token = access_token;
       user.expires_in = expires_in;
+      user.tokenExpiry = tokenExpiry;
       user.refresh_token = refresh_token;
       await user.save();
     } else {
@@ -70,29 +76,37 @@ const callback = async (req, res) => {
         picture,
         access_token,
         expires_in,
+        tokenExpiry,
         refresh_token,
       });
     }
 
     // Save user ID in session
     req.session.userId = user._id;
-    // console.log("Setting session userId to:", user._id);
-    // console.log("Session ID:", req.sessionID);
-    // console.log("Full session object:", req.session);
 
-    // Force session save
-    // req.session.save((err) => {
-    //   if (err) {
-    //     console.error("Session save error:", err);
-    //   } else {
-    //     console.log("Session saved successfully");
-    //   }
+    // Log successful login
+    await logSession("login", req, {
+      userId: user._id,
+      isNewUser,
+      email: user.email,
+    });
+
+    // Log session creation
+    await logSession("session_created", req, {
+      userId: user._id,
+    });
+    console.log("Setting session userId to:", user._id);
+    console.log("Session ID:", req.sessionID);
+    console.log("Full session object:", req.session);
+
     res.redirect(process.env.CLIENT_URL);
-    // });
-
-    // res.status(200).json({ user, success: true });
   } catch (error) {
     console.error("OAuth error:", error.response?.data || error.message);
+    // Log failed login
+    await logSession("failed_login", req, {
+      error: error.message,
+      reason: "oauth_error",
+    });
     res.redirect(`${process.env.CLIENT_URL}?error=auth_failed`);
     // res
     //   .status(404)
@@ -102,9 +116,6 @@ const callback = async (req, res) => {
 
 // Get current user
 const getCurrentUser = async (req, res) => {
-  console.log("=== GET CURRENT USER ===");
-  // console.log("Session data:", req.session);
-
   if (!req.session.userId) {
     console.log("No user ID in session - returning 401");
     return res.status(401).json({ user: null });
@@ -124,8 +135,26 @@ const getCurrentUser = async (req, res) => {
 
 const logout = async (req, res) => {
   console.log("LOGOUT");
-  req.session.destroy(() => {
-    res.status(200).json({ success: true, message: "Logged out of system." });
+  const userId = req.session?.userId;
+  const sessionId = req.sessionID;
+
+  console.log("loggin out: ", userId);
+
+  req.session.destroy(async (err) => {
+    if (err) {
+      return res.status(500).json({ error: "Logout failed" });
+    }
+
+    // Log logout
+    if (userId) {
+      await logSession("logout", req, {
+        userId,
+        sessionId,
+      });
+    }
+
+    res.clearCookie("connect.sid");
+    res.json({ message: "Logged out successfully" });
   });
 };
 
