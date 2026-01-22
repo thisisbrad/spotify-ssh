@@ -122,9 +122,6 @@ const callback = async (req, res) => {
 
 // Get current user
 const getCurrentUser = async (req, res) => {
-  console.log("=== GET CURRENT USER ===");
-  // console.log("Session data:", req.session);
-
   if (!req.session.userId) {
     console.log("No user ID in session - returning 401");
     return res.status(401).json({ user: null });

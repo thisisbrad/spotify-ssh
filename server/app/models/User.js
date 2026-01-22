@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
     expires_in: Number,
     refresh_token: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("User", userSchema);
