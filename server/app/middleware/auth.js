@@ -22,7 +22,9 @@ const requireAuthWithRefresh = async (req, res, next) => {
 
   try {
     // Verify user still exists
-    const user = await User.findById(req.session.userId);
+    const user = await User.findById(req.session.userId).select(
+      "email name picture -_id",
+    );
 
     if (!user) {
       req.session.destroy();
@@ -45,7 +47,7 @@ const requireAuthWithRefresh = async (req, res, next) => {
     }
 
     // Attach user to request object for convenience
-    // req.user = user;
+    req.user = user;
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
