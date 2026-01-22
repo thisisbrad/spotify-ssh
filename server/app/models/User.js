@@ -16,9 +16,15 @@ const userSchema = new mongoose.Schema(
     picture: String,
     access_token: String,
     expires_in: Number,
+    tokenExpiry: Date,
     refresh_token: String,
   },
   { timestamps: true },
 );
+
+userSchema.methods.isTokenExpired = function () {
+  if (!this.tokenExpiry) return true;
+  return new Date() >= this.tokenExpiry;
+};
 
 module.exports = mongoose.model("User", userSchema);

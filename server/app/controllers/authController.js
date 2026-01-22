@@ -45,6 +45,8 @@ const callback = async (req, res) => {
     });
 
     const { access_token, expires_in, refresh_token } = tokenResponse.data;
+    // TODO: move to model
+    const tokenExpiry = new Date(Date.now() + expires_in * 1000);
 
     const userInfoResponse = await axios.get(GOOGLE_USERINFO_URL, {
       headers: { Authorization: `Bearer ${access_token}` },
@@ -62,6 +64,7 @@ const callback = async (req, res) => {
       user.picture = picture;
       user.access_token = access_token;
       user.expires_in = expires_in;
+      user.tokenExpiry = tokenExpiry;
       user.refresh_token = refresh_token;
       await user.save();
     } else {
@@ -73,6 +76,7 @@ const callback = async (req, res) => {
         picture,
         access_token,
         expires_in,
+        tokenExpiry,
         refresh_token,
       });
     }
@@ -95,17 +99,7 @@ const callback = async (req, res) => {
     console.log("Session ID:", req.sessionID);
     console.log("Full session object:", req.session);
 
-    // Force session save
-    // req.session.save((err) => {
-    //   if (err) {
-    //     console.error("Session save error:", err);
-    //   } else {
-    //     console.log("Session saved successfully");
-    //   }
     res.redirect(process.env.CLIENT_URL);
-    // });
-
-    // res.status(200).json({ user, success: true });
   } catch (error) {
     console.error("OAuth error:", error.response?.data || error.message);
     // Log failed login
