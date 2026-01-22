@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
+import ActivityLog from "./ActivityLog";
+
 const API_URL = "http://localhost:3000/api/v1";
 
 axios.defaults.withCredentials = true;
@@ -103,6 +105,7 @@ const GoogleLogin = () => {
         <div>
           <p>{user.name}</p>
           <button onClick={handleLogout}>Logout</button>
+          <ActivityLog />
         </div>
       ) : (
         <div>

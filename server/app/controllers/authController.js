@@ -147,6 +147,8 @@ const logout = async (req, res) => {
   const userId = req.session?.userId;
   const sessionId = req.sessionID;
 
+  console.log("loggin out: ", userId);
+
   req.session.destroy(async (err) => {
     if (err) {
       return res.status(500).json({ error: "Logout failed" });
