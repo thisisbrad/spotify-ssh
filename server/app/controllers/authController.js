@@ -6,6 +6,7 @@ const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 const login = async (req, res) => {
+  console.log(">>>", req.session);
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT,
     redirect_uri: process.env.GOOGLE_CALLBACK_URI,
@@ -15,13 +16,17 @@ const login = async (req, res) => {
     prompt: "consent",
   });
   const authURL = `${GOOGLE_AUTH_URL}?${params.toString()}`;
-  // console.log();
   res.redirect(authURL);
-  // res.status(200).json({ authURL, success: true });
 };
 
 const callback = async (req, res) => {
-  const { code } = req.query;
+  console.log("=== OAUTH CALLBACK STARTED ===");
+  const { code, error } = req.query;
+  console.log("Query params:", { code, error });
+  // Once I have React
+  // if (error || !code) {
+  //   return res.redirect(`${process.env.CLIENT_URL}?error=${error || 'no_code'}`);
+  // }
   if (!code) {
     res
       .status(404)
@@ -37,33 +42,96 @@ const callback = async (req, res) => {
       grant_type: "authorization_code",
     });
 
-    const { access_token } = tokenResponse.data;
-    console.log("access token:", tokenResponse.data);
+    const { access_token, expires_in, refresh_token } = tokenResponse.data;
 
     const userInfoResponse = await axios.get(GOOGLE_USERINFO_URL, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
-    console.log("User data", userInfoResponse.data);
+    // console.log("User data", userInfoResponse.data);
     const { id, email, name, picture } = userInfoResponse.data;
 
-    const user = await User.create({
-      googleId: id,
-      email,
-      name,
-      picture,
-      access_token,
-    });
-    res.status(200).json({ user, success: true });
+    let user = await User.findOne({ googleId: id });
+
+    if (user) {
+      // Update existing user
+      user.email = email;
+      user.name = name;
+      user.picture = picture;
+      user.access_token = access_token;
+      user.expires_in = expires_in;
+      user.refresh_token = refresh_token;
+      await user.save();
+    } else {
+      // Create new user
+      user = await User.create({
+        googleId: id,
+        email,
+        name,
+        picture,
+        access_token,
+        expires_in,
+        refresh_token,
+      });
+    }
+
+    // Save user ID in session
+    req.session.userId = user._id;
+    // console.log("Setting session userId to:", user._id);
+    // console.log("Session ID:", req.sessionID);
+    // console.log("Full session object:", req.session);
+
+    // Force session save
+    // req.session.save((err) => {
+    //   if (err) {
+    //     console.error("Session save error:", err);
+    //   } else {
+    //     console.log("Session saved successfully");
+    //   }
+    res.redirect(process.env.CLIENT_URL);
+    // });
+
+    // res.status(200).json({ user, success: true });
   } catch (error) {
-    console.log(error);
-    res
-      .status(404)
-      .json({ message: "The callback has an error", success: false });
+    console.error("OAuth error:", error.response?.data || error.message);
+    res.redirect(`${process.env.CLIENT_URL}?error=auth_failed`);
+    // res
+    //   .status(404)
+    //   .json({ message: "The callback has an error", success: false });
+  }
+};
+
+// Get current user
+const getCurrentUser = async (req, res) => {
+  console.log("=== GET CURRENT USER ===");
+  // console.log("Session data:", req.session);
+
+  if (!req.session.userId) {
+    console.log("No user ID in session - returning 401");
+    return res.status(401).json({ user: null });
+  }
+  try {
+    const user = await User.findById(req.session.userId).select(
+      "email name picture -_id",
+    );
+    if (!user) {
+      return res.status(401).json({ user: null });
+    }
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
 const logout = async (req, res) => {
-  res.status(200).json({ success: true });
+  console.log("LOGOUT");
+  req.session.destroy(() => {
+    res.status(200).json({ success: true, message: "Logged out of system." });
+  });
 };
 
-module.exports = { login, logout, callback };
+module.exports = {
+  login,
+  logout,
+  callback,
+  getCurrentUser,
+};
