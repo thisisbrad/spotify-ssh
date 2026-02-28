@@ -46,6 +46,7 @@ const GoogleLogin = () => {
     <div style={{ padding: "20px", textAlign: "center" }}>
       {user ? (
         <div>
+          <img style={{ borderRadius: "50%" }} src={user.picture} />
           <p>{user.name}</p>
           <button onClick={handleLogout}>Logout</button>
         </div>
